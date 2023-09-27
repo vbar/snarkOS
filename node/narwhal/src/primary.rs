@@ -1388,9 +1388,11 @@ mod tests {
 
         // Create a valid proposal with an author that isn't the primary.
         let round = 1;
+        let peer_account = &accounts[1];
+        let peer_ip = peer_account.0;
         let timestamp = now();
         let proposal = create_test_proposal(
-            &accounts[1].1,
+            &peer_account.1,
             primary.ledger.current_committee().unwrap(),
             round,
             Default::default(),
@@ -1400,15 +1402,15 @@ mod tests {
 
         // Make sure the primary is aware of the transmissions in the proposal.
         for (transmission_id, transmission) in proposal.transmissions() {
-            primary.workers[0].process_transmission_from_peer(accounts[1].0, *transmission_id, transmission.clone())
+            primary.workers[0].process_transmission_from_peer(peer_ip, *transmission_id, transmission.clone())
         }
+
+        // The author must be known to resolver to pass propose checks.
+        primary.gateway.resolver().insert_peer(peer_ip, peer_ip, peer_account.1.address());
 
         // Try to process the batch proposal from the peer, should succeed.
         assert!(
-            primary
-                .process_batch_propose_from_peer(accounts[1].0, (*proposal.batch_header()).clone().into())
-                .await
-                .is_ok()
+            primary.process_batch_propose_from_peer(peer_ip, (*proposal.batch_header()).clone().into()).await.is_ok()
         );
     }
 
@@ -1422,9 +1424,11 @@ mod tests {
         let previous_certificates = store_certificate_chain(&primary, &accounts, round, &mut rng);
 
         // Create a valid proposal with an author that isn't the primary.
+        let peer_account = &accounts[1];
+        let peer_ip = peer_account.0;
         let timestamp = now();
         let proposal = create_test_proposal(
-            &accounts[1].1,
+            &peer_account.1,
             primary.ledger.current_committee().unwrap(),
             round,
             previous_certificates,
@@ -1434,14 +1438,14 @@ mod tests {
 
         // Make sure the primary is aware of the transmissions in the proposal.
         for (transmission_id, transmission) in proposal.transmissions() {
-            primary.workers[0].process_transmission_from_peer(accounts[1].0, *transmission_id, transmission.clone())
+            primary.workers[0].process_transmission_from_peer(peer_ip, *transmission_id, transmission.clone())
         }
 
+        // The author must be known to resolver to pass propose checks.
+        primary.gateway.resolver().insert_peer(peer_ip, peer_ip, peer_account.1.address());
+
         // Try to process the batch proposal from the peer, should succeed.
-        primary
-            .process_batch_propose_from_peer(accounts[1].0, (*proposal.batch_header()).clone().into())
-            .await
-            .unwrap();
+        primary.process_batch_propose_from_peer(peer_ip, (*proposal.batch_header()).clone().into()).await.unwrap();
     }
 
     #[tokio::test]
@@ -1451,9 +1455,11 @@ mod tests {
 
         // Create a valid proposal with an author that isn't the primary.
         let round = 1;
+        let peer_account = &accounts[1];
+        let peer_ip = peer_account.0;
         let timestamp = now();
         let proposal = create_test_proposal(
-            &accounts[1].1,
+            &peer_account.1,
             primary.ledger.current_committee().unwrap(),
             round,
             Default::default(),
@@ -1463,13 +1469,16 @@ mod tests {
 
         // Make sure the primary is aware of the transmissions in the proposal.
         for (transmission_id, transmission) in proposal.transmissions() {
-            primary.workers[0].process_transmission_from_peer(accounts[1].0, *transmission_id, transmission.clone())
+            primary.workers[0].process_transmission_from_peer(peer_ip, *transmission_id, transmission.clone())
         }
+
+        // The author must be known to resolver to pass propose checks.
+        primary.gateway.resolver().insert_peer(peer_ip, peer_ip, peer_account.1.address());
 
         // Try to process the batch proposal from the peer, should error.
         assert!(
             primary
-                .process_batch_propose_from_peer(accounts[1].0, BatchPropose {
+                .process_batch_propose_from_peer(peer_ip, BatchPropose {
                     round: round + 1,
                     batch_header: Data::Object(proposal.batch_header().clone())
                 })
@@ -1488,9 +1497,11 @@ mod tests {
         let previous_certificates = store_certificate_chain(&primary, &accounts, round, &mut rng);
 
         // Create a valid proposal with an author that isn't the primary.
+        let peer_account = &accounts[1];
+        let peer_ip = peer_account.0;
         let timestamp = now();
         let proposal = create_test_proposal(
-            &accounts[1].1,
+            &peer_account.1,
             primary.ledger.current_committee().unwrap(),
             round,
             previous_certificates,
@@ -1500,13 +1511,16 @@ mod tests {
 
         // Make sure the primary is aware of the transmissions in the proposal.
         for (transmission_id, transmission) in proposal.transmissions() {
-            primary.workers[0].process_transmission_from_peer(accounts[1].0, *transmission_id, transmission.clone())
+            primary.workers[0].process_transmission_from_peer(peer_ip, *transmission_id, transmission.clone())
         }
+
+        // The author must be known to resolver to pass propose checks.
+        primary.gateway.resolver().insert_peer(peer_ip, peer_ip, peer_account.1.address());
 
         // Try to process the batch proposal from the peer, should error.
         assert!(
             primary
-                .process_batch_propose_from_peer(accounts[1].0, BatchPropose {
+                .process_batch_propose_from_peer(peer_ip, BatchPropose {
                     round: round + 1,
                     batch_header: Data::Object(proposal.batch_header().clone())
                 })
