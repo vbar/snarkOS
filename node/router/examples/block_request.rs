@@ -10,7 +10,7 @@ fn main() {
         buf.extend_from_slice(data);
         let msg = match BlockRequest::deserialize(buf) {
             Ok(..) => "OK",
-            Err(..) => "error"
+            Err(..) => "error",
         };
         eprintln!("{}", msg);
     });

@@ -11,13 +11,11 @@ fn main() {
         let mut buf = BytesMut::with_capacity(data.len());
         buf.extend_from_slice(data);
         let msg = match BlockResponse::<CurrentNetwork>::deserialize(buf) {
-            Ok(response) => {
-                match response.blocks.deserialize_blocking() {
-                    Ok(..) => "OK",
-                    Err(..) => "inner error"
-                }
+            Ok(response) => match response.blocks.deserialize_blocking() {
+                Ok(..) => "OK",
+                Err(..) => "inner error",
             },
-            Err(..) => "outer error"
+            Err(..) => "outer error",
         };
         eprintln!("{}", msg);
     });

@@ -2,7 +2,7 @@
 extern crate afl;
 
 use bytes::BytesMut;
-use snarkos_node_router_messages::{Ping, MessageTrait};
+use snarkos_node_router_messages::{MessageTrait, Ping};
 
 type CurrentNetwork = snarkvm::prelude::Testnet3;
 
@@ -12,7 +12,7 @@ fn main() {
         buf.extend_from_slice(data);
         let msg = match Ping::<CurrentNetwork>::deserialize(buf) {
             Ok(..) => "OK",
-            Err(..) => "error"
+            Err(..) => "error",
         };
         eprintln!("{}", msg);
     });
