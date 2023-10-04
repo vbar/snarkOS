@@ -53,6 +53,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "afl"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "525e1011266780f6afa640d6149901a37e89c46c1329b8cbf33e1f6c271f7a36"
+dependencies = [
+ "home",
+ "libc",
+ "rustc_version",
+ "xdg",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1379,6 +1391,15 @@ name = "hex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
+
+[[package]]
+name = "home"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5444c27eef6923071f7ebcc33e3444508466a76f7a2b93da00ed6e19f30c1ddb"
+dependencies = [
+ "windows-sys 0.48.0",
+]
 
 [[package]]
 name = "http"
@@ -3240,6 +3261,7 @@ dependencies = [
 name = "snarkos-node-router"
 version = "2.1.7"
 dependencies = [
+ "afl",
  "anyhow",
  "async-trait",
  "bincode",
@@ -5208,6 +5230,12 @@ dependencies = [
  "cfg-if",
  "windows-sys 0.48.0",
 ]
+
+[[package]]
+name = "xdg"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213b7324336b53d2414b2db8537e56544d981803139155afa84f76eeebb7a546"
 
 [[package]]
 name = "zeroize"

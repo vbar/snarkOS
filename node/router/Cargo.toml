@@ -19,6 +19,9 @@ edition = "2021"
 [features]
 test = [ ]
 
+[dependencies.afl]
+version = "0.14.1"
+
 [dependencies.anyhow]
 version = "1.0.75"
 
