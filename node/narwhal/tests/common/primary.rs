@@ -17,6 +17,7 @@ use crate::common::{
     CurrentNetwork,
     TranslucentLedgerService,
 };
+use futures::future::join_all;
 use snarkos_account::Account;
 use snarkos_node_narwhal::{
     helpers::{init_primary_channels, PrimarySender, Storage},
@@ -228,50 +229,62 @@ impl TestNetwork {
 
     // Connects all nodes to each other.
     pub async fn connect_all(&self) {
+        let mut handles = Vec::new();
         for (validator, other_validator) in self.validators.values().tuple_combinations() {
             // Connect to the node.
             let ip = other_validator.primary.gateway().local_ip();
             if let Some(handle) = validator.primary.gateway().connect(ip) {
-                assert!(handle.await.is_ok());
+                handles.push(handle);
             } else {
                 panic!("Cannot connect all validators - gateway connect failed");
             }
         }
+
+        join_all(handles).await;
     }
 
     // Connects a specific node to all other nodes.
     pub async fn connect_one(&self, id: u16) {
         let target_validator = self.validators.get(&id).unwrap();
         let target_ip = target_validator.primary.gateway().local_ip();
+        let mut handles = Vec::new();
         for validator in self.validators.values() {
             if validator.id != id {
                 // Connect to the node.
                 if let Some(handle) = validator.primary.gateway().connect(target_ip) {
-                    assert!(handle.await.is_ok());
+                    handles.push(handle);
                 } else {
                     panic!("Cannot connect validator - gateway connect failed");
                 }
             }
         }
+
+        join_all(handles).await;
     }
 
     // Disconnects N nodes from all other nodes.
     pub async fn disconnect(&self, num_nodes: u16) {
+        let mut handles = Vec::new();
         for validator in self.validators.values().take(num_nodes as usize) {
             for peer_ip in validator.primary.gateway().connected_peers().read().iter() {
                 let handle = validator.primary.gateway().disconnect(*peer_ip);
-                assert!(handle.await.is_ok());
+                handles.push(handle);
             }
         }
+
+        join_all(handles).await;
     }
 
     // Disconnects a specific node from all other nodes.
     pub async fn disconnect_one(&self, id: u16) {
         let target_validator = self.validators.get(&id).unwrap();
+        let mut handles = Vec::new();
         for peer_ip in target_validator.primary.gateway().connected_peers().read().iter() {
             let handle = target_validator.primary.gateway().disconnect(*peer_ip);
-            assert!(handle.await.is_ok());
+            handles.push(handle);
         }
+
+        join_all(handles).await;
     }
 
     // Checks if at least 2f + 1 nodes have reached the given round.
