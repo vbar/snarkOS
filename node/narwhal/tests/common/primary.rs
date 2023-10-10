@@ -219,9 +219,11 @@ impl TestNetwork {
     pub async fn connect_validators(&self, first_id: u16, second_id: u16) {
         let first_validator = self.validators.get(&first_id).unwrap();
         let second_validator_ip = self.validators.get(&second_id).unwrap().primary.gateway().local_ip();
-        first_validator.primary.gateway().connect(second_validator_ip);
-        // Give the connection time to be established.
-        sleep(Duration::from_millis(100)).await;
+        if let Some(handle) = first_validator.primary.gateway().connect(second_validator_ip) {
+            assert!(handle.await.is_ok());
+        } else {
+            panic!("Cannot connect validators - gateway connect failed");
+        }
     }
 
     // Connects all nodes to each other.
@@ -229,9 +231,11 @@ impl TestNetwork {
         for (validator, other_validator) in self.validators.values().tuple_combinations() {
             // Connect to the node.
             let ip = other_validator.primary.gateway().local_ip();
-            validator.primary.gateway().connect(ip);
-            // Give the connection time to be established.
-            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+            if let Some(handle) = validator.primary.gateway().connect(ip) {
+                assert!(handle.await.is_ok());
+            } else {
+                panic!("Cannot connect all validators - gateway connect failed");
+            }
         }
     }
 
@@ -242,9 +246,11 @@ impl TestNetwork {
         for validator in self.validators.values() {
             if validator.id != id {
                 // Connect to the node.
-                validator.primary.gateway().connect(target_ip);
-                // Give the connection time to be established.
-                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                if let Some(handle) = validator.primary.gateway().connect(target_ip) {
+                    assert!(handle.await.is_ok());
+                } else {
+                    panic!("Cannot connect validator - gateway connect failed");
+                }
             }
         }
     }
@@ -253,23 +259,19 @@ impl TestNetwork {
     pub async fn disconnect(&self, num_nodes: u16) {
         for validator in self.validators.values().take(num_nodes as usize) {
             for peer_ip in validator.primary.gateway().connected_peers().read().iter() {
-                validator.primary.gateway().disconnect(*peer_ip);
+                let handle = validator.primary.gateway().disconnect(*peer_ip);
+                assert!(handle.await.is_ok());
             }
         }
-
-        // Give the connections time to be closed.
-        sleep(Duration::from_millis(100)).await;
     }
 
     // Disconnects a specific node from all other nodes.
     pub async fn disconnect_one(&self, id: u16) {
         let target_validator = self.validators.get(&id).unwrap();
         for peer_ip in target_validator.primary.gateway().connected_peers().read().iter() {
-            target_validator.primary.gateway().disconnect(*peer_ip);
+            let handle = target_validator.primary.gateway().disconnect(*peer_ip);
+            assert!(handle.await.is_ok());
         }
-
-        // Give the connections time to be closed.
-        sleep(Duration::from_millis(100)).await;
     }
 
     // Checks if at least 2f + 1 nodes have reached the given round.
