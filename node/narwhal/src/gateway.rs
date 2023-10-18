@@ -79,9 +79,9 @@ const MAX_CONNECTION_ATTEMPTS: usize = 10;
 const RESTRICTED_INTERVAL: i64 = (MAX_CONNECTION_ATTEMPTS as u64 * MAX_BATCH_DELAY / 1000) as i64; // seconds
 
 /// The minimum number of validators to maintain a connection to.
-const MIN_CONNECTED_VALIDATORS: usize = 50;
+const MIN_CONNECTED_VALIDATORS: usize = 175;
 /// The maximum number of validators to send in a validators response event.
-const MAX_VALIDATORS_TO_SEND: usize = 100;
+const MAX_VALIDATORS_TO_SEND: usize = 200;
 
 /// Part of the Gateway API that deals with networking.
 /// This is a separate trait to allow for easier testing/mocking.
@@ -612,7 +612,7 @@ impl<N: Network> Gateway<N> {
                 bail!("{CONTEXT} {:?}", disconnect.reason)
             }
             Event::PrimaryPing(ping) => {
-                let PrimaryPing { version, block_locators, batch_certificates } = ping;
+                let PrimaryPing { version, block_locators, primary_certificate, batch_certificates } = ping;
 
                 // Ensure the event version is not outdated.
                 if version < Event::<N>::VERSION {
@@ -628,9 +628,11 @@ impl<N: Network> Gateway<N> {
                 }
 
                 // Send the batch certificates to the primary.
-                for batch_certificate in batch_certificates {
-                    let _ = self.primary_sender().tx_primary_ping.send((peer_ip, batch_certificate)).await;
-                }
+                let _ = self
+                    .primary_sender()
+                    .tx_primary_ping
+                    .send((peer_ip, primary_certificate, batch_certificates))
+                    .await;
                 Ok(())
             }
             Event::TransmissionRequest(request) => {
