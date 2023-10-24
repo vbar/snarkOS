@@ -96,7 +96,7 @@ pub struct Primary<N: Network> {
     /// The primary lock.
     lock: Arc<TMutex<()>>,
     /// The lock for propose_batch.
-    propose_lock: Arc<TMutex<()>>,
+    propose_lock: Arc<TMutex<u64>>,
 }
 
 impl<N: Network> Primary<N> {
@@ -273,7 +273,7 @@ impl<N: Network> Primary<N> {
     /// 4. Broadcast the batch header to all validators for signing.
     pub async fn propose_batch(&self) -> Result<()> {
         // This function isn't re-entrant.
-        let _lock_guard = self.propose_lock.try_lock()?;
+        let mut lock_guard = self.propose_lock.try_lock()?;
 
         // Check if the proposed batch has expired, and clear it if it has expired.
         if let Err(e) = self.check_proposed_batch_for_expiration().await {
@@ -431,6 +431,14 @@ impl<N: Network> Primary<N> {
             debug!("Primary is safely skipping a batch proposal {}", "(no unconfirmed transactions)".dimmed());
             return Ok(());
         }
+        // Ditto if the batch had already been proposed.
+        assert!(round > 0);
+        if *lock_guard == round {
+            warn!("Primary is safely skipping a batch proposal - round {round} already proposed");
+            return Ok(());
+        }
+
+        *lock_guard = round;
 
         /* Proceeding to sign & propose the batch. */
         info!("Proposing a batch with {} transmissions for round {round}...", transmissions.len());
