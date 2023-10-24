@@ -95,6 +95,8 @@ pub struct Primary<N: Network> {
     handles: Arc<Mutex<Vec<JoinHandle<()>>>>,
     /// The primary lock.
     lock: Arc<TMutex<()>>,
+    /// The lock for propose_batch.
+    propose_lock: Arc<TMutex<()>>,
 }
 
 impl<N: Network> Primary<N> {
@@ -123,6 +125,7 @@ impl<N: Network> Primary<N> {
             signed_proposals: Default::default(),
             handles: Default::default(),
             lock: Default::default(),
+            propose_lock: Default::default(),
         })
     }
 
@@ -269,6 +272,9 @@ impl<N: Network> Primary<N> {
     /// 3. Set the batch proposal in the primary.
     /// 4. Broadcast the batch header to all validators for signing.
     pub async fn propose_batch(&self) -> Result<()> {
+        // This function isn't re-entrant.
+        let _lock_guard = self.propose_lock.try_lock()?;
+
         // Check if the proposed batch has expired, and clear it if it has expired.
         if let Err(e) = self.check_proposed_batch_for_expiration().await {
             warn!("Failed to check the proposed batch for expiration - {e}");
