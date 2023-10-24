@@ -417,6 +417,8 @@ impl<N: Network> Worker<N> {
             tokio::spawn(async move {
                 self_.gateway.send(peer_ip, Event::TransmissionResponse((transmission_id, transmission).into())).await;
             });
+        } else {
+            warn!("Dropping request from '{peer_ip}' - transmission ID '{transmission_id}' not found");
         }
     }
 
