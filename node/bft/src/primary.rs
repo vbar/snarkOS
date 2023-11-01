@@ -271,7 +271,7 @@ impl<N: Network> Primary<N> {
     /// 4. Broadcast the batch header to all validators for signing.
     pub async fn propose_batch(&self) -> Result<()> {
         // This function isn't re-entrant.
-        let mut lock_guard = self.propose_lock.try_lock()?;
+        let mut lock_guard = self.propose_lock.lock().await;
 
         // Check if the proposed batch has expired, and clear it if it has expired.
         if let Err(e) = self.check_proposed_batch_for_expiration().await {
